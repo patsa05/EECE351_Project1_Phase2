@@ -10,7 +10,7 @@ AUBoutique is a distributed e-commerce system built using a client-server archit
 - **Database**: SQLite database for persistent storage
 - **Communication Protocol**: TCP/IP-based JSON messaging protocol
 
-```mermaid
+```
 graph TD
     A[Client Application] -->|JSON/TCP| B[Central Server]
     B -->|SQL| C[SQLite Database]
