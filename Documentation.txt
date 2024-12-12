@@ -1,0 +1,205 @@
+# AUBoutique System Documentation
+
+## 1. System Architecture
+
+### 1.1 Overview
+AUBoutique is a distributed e-commerce system built using a client-server architecture with the following key components:
+
+- **Client Application**: A PyQt5-based GUI application
+- **Server**: Central server handling business logic and database operations
+- **Database**: SQLite database for persistent storage
+- **Communication Protocol**: TCP/IP-based JSON messaging protocol
+
+```mermaid
+graph TD
+    A[Client Application] -->|JSON/TCP| B[Central Server]
+    B -->|SQL| C[SQLite Database]
+    B -->|JSON/TCP| A
+    D[Other Clients] -->|JSON/TCP| B
+```
+
+### 1.2 Communication Protocol
+The system uses a JSON-based protocol over TCP/IP sockets:
+
+```json
+// Example Request
+{
+    "action": "ACTION_NAME",
+    "param1": "value1",
+    "param2": "value2"
+}
+
+// Example Response
+{
+    "status": "success/error",
+    "message": "Response message",
+    "data": {}
+}
+```
+
+## 2. Implementation Details
+
+### 2.1 Client Side Implementation
+
+#### Core Components:
+1. **MainApplication** (`MainApp.py`)
+   - Main GUI application window
+   - Manages navigation between different pages
+   - Handles user authentication and session management
+
+2. **Client Communication** (`client.py`, `client_helper.py`)
+   ```python
+   def send_data(data):
+       """
+       Sends JSON-encoded data to server and handles response
+       """
+       try:
+           client_socket.sendall(json.dumps(data).encode('utf-8'))
+           response = client_socket.recv(BUFFER_SIZE).decode()
+           return json.loads(response)
+       except socket.error:
+           return {"status": "error", "message": "Connection failed"}
+   ```
+
+#### Key Features:
+- User authentication (login/register)
+- Product browsing and searching
+- Shopping cart management
+- Real-time messaging with sellers
+- Portfolio management
+- Funds management
+
+### 2.2 Server Side Implementation
+
+#### Core Components:
+1. **Main Server** (`server.py`)
+   - Socket server initialization
+   - Client connection management
+   - Request routing
+
+2. **Request Handler** (`server_helper.py`)
+   ```python
+   def handle_client(connection, address, socket_username_array, message_queue, usernames_to_ip_port):
+       """
+       Handles individual client connections and routes requests
+       """
+       while True:
+           try:
+               request = connection.recv(BUFFER_SIZE).decode()
+               parsed_request = json.loads(request)
+               action = parsed_request.get("action")
+               # Route to appropriate handler
+               response = route_request(action, parsed_request)
+               send_response(response, connection)
+           except Exception:
+               break
+   ```
+
+#### Key Features:
+- Multi-threaded client handling
+- Database connection pooling
+- Session management
+- Real-time messaging coordination
+- Transaction processing
+
+### 2.3 Database Implementation
+
+#### Schema Overview:
+```sql
+-- Users Table
+CREATE TABLE users (
+    user_id INTEGER PRIMARY KEY,
+    username TEXT UNIQUE,
+    password TEXT,
+    email TEXT,
+    balance REAL
+);
+
+-- Products Table
+CREATE TABLE products (
+    product_id INTEGER PRIMARY KEY,
+    name TEXT,
+    price REAL,
+    description TEXT,
+    owner TEXT,
+    quantity INTEGER
+);
+
+-- Transactions Table
+CREATE TABLE transactions (
+    transaction_id INTEGER PRIMARY KEY,
+    buyer_id INTEGER,
+    seller_id INTEGER,
+    product_id INTEGER,
+    quantity INTEGER,
+    sale_price REAL,
+    date TEXT
+);
+```
+
+## 3. Key Features
+
+### 3.1 User Authentication
+- Secure password hashing using SHA-256
+- Session management using socket connections
+- Registration validation
+
+### 3.2 Product Management
+- Add/view products
+- Search functionality
+- Owner-based filtering
+- Quantity tracking
+
+### 3.3 Transaction System
+- Real-time balance checking
+- Transaction history
+- Purchase validation
+- Inventory management
+
+### 3.4 Real-time Communication
+- Direct messaging between buyers and sellers
+- Notification system
+- Online status tracking
+
+## 4. Security Considerations
+
+1. **Password Security**
+   - Passwords are hashed using SHA-256
+   - Never stored in plain text
+
+2. **Input Validation**
+   - Server-side validation of all inputs
+   - Protection against SQL injection
+
+3. **Error Handling**
+   - Graceful handling of connection errors
+   - Transaction rollback on failures
+
+## 5. Configuration
+
+```python
+# Default Configuration (config.py)
+DEFAULT_IP = "localhost"
+DEFAULT_PORT = 8080
+BUFFER_SIZE = 4096
+DATABASE_NAME = "AUBoutique.db"
+```
+
+## 6. Future Improvements
+
+1. **Security Enhancements**
+   - Implement SSL/TLS encryption
+   - Add rate limiting
+   - Enhanced session management
+
+2. **Performance Optimizations**
+   - Connection pooling improvements
+   - Caching layer implementation
+   - Query optimization
+
+3. **Feature Additions**
+   - Product categories
+   - User ratings/reviews
+   - Advanced search filters
+
+This documentation provides a high-level overview of the AUBoutique system. For specific implementation details, refer to the individual source files and their inline documentation.
